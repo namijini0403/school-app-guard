@@ -11,7 +11,10 @@ async function api(path, body) {
 function render(container, report) {
   container.replaceChildren(element('p', labels[report.status] || '담당자 확인 필요', `status ${report.status}`));
   if (report.summary) container.append(element('p', typeof report.summary === 'string' ? report.summary : JSON.stringify(report.summary)));
-  if (report.coverage) container.append(element('p', `검사 범위: ${JSON.stringify(report.coverage)}`, 'muted'));
+  if (report.coverage) {
+    const c = report.coverage;
+    container.append(element('p', `검사 ${c.filesScanned}개 파일 · 건너뛴 파일 ${c.skippedFiles}개 · 제외 폴더 ${c.excludedDirectories}개 · 링크 ${c.linkedEntries}개 · 읽기 오류 ${c.unreadableEntries}개${c.truncated ? ' · 한도 초과로 일부 생략' : ''}. ${c.complete ? '지원 범위 읽기 완료. 운영 환경은 별도 확인이 필요합니다.' : '미검사 범위가 있어 별도 확인이 필요합니다.'}`, 'muted'));
+  }
   for (const finding of report.findings || []) {
     const card = element('article', null, 'finding');
     card.append(element('h3', finding.title), element('p', finding.reason));
