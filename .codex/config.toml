@@ -1,0 +1,7 @@
+# Conservative defaults for trusted project sessions; CLI/runtime policy can override.
+# https://learn.chatgpt.com/docs/config-file/config-reference
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+network_access = false

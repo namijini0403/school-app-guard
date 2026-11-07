@@ -1,0 +1,10 @@
+{
+  "name": "school-app-guard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-only school application security and privacy review",
+  "engines": { "node": ">=24.22.2" },
+  "scripts": { "test": "node --test", "start": "node cli.mjs" },
+  "license": "MIT"
+}
