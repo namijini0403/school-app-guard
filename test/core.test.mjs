@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { scanDirectory } from '../src/scanner.mjs';
 import { evaluatePolicy, questionnaire, combineAssessment } from '../src/policy.mjs';
 
@@ -125,4 +127,27 @@ test('optional local path callback is separate from redacted report; callback fa
   assert.equal(failed.coverage.unreadableEntries, 1);
   assert.ok(!JSON.stringify(failed).includes('PRIVATE_FILE_CALLBACK'));
   await assert.rejects(scanDirectory(root, { onFile: 'bad' }), /Invalid scanner callback/);
+});
+test('valid email tokens remain detectable without matching inside oversized tokens', async t => {
+  const valid = await fixture(t, { 'contact.txt': 'Contact: teacher.test+school@example.org' });
+  assert.ok((await scanDirectory(valid)).findings.some(x => x.id === 'CONTACT_DATA'));
+  const oversized = await fixture(t, { 'contact.txt': `${'a'.repeat(65)}@example.org` });
+  assert.ok(!(await scanDirectory(oversized)).findings.some(x => x.id === 'CONTACT_DATA'));
+});
+test('adversarial maximum-size regex inputs finish within a killable subprocess budget', async t => {
+  // This is a hang regression, not a microbenchmark: the OS can kill the child
+  // even if a synchronous regexp blocks its JS event loop indefinitely.
+  const size = 1024 * 1024;
+  const root = await fixture(t, {
+    'no-at.js': 'a'.repeat(size),
+    'long-domain.js': `a@${'a'.repeat(size - 2)}`,
+    'domain-near-matches.js': ('a@' + '.'.repeat(253) + '! ').repeat(4000),
+    'unterminated-secret.js': `password="${'a'.repeat(size - 10)}`,
+    'keyword-whitespace.js': `exec${' '.repeat(size - 5)}!`,
+    'repeated-secret-prefix.js': 'sk-'.repeat(Math.floor(size / 3)),
+  });
+  const scannerUrl = new URL('../src/scanner.mjs', import.meta.url).href;
+  const program = `import {scanDirectory} from ${JSON.stringify(scannerUrl)}; const r = await scanDirectory(process.argv[1]); if(r.coverage.filesScanned !== 6) process.exit(2);`;
+  const result = await promisify(execFile)(process.execPath, ['--input-type=module', '--eval', program, root], { timeout: 10000, maxBuffer: 4096, windowsHide: true });
+  assert.equal(result.stdout, '');
 });
