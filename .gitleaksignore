@@ -1,0 +1,3 @@
+# Synthetic PEM header in the secret-detector regression test; no key material.
+# Exact historical finding only: do not exclude this test file or private-key rules.
+5a61287e51d7bd5c4b2deae23642ae1f3cec1542:test/secrets.test.mjs:private-key:34

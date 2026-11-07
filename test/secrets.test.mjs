@@ -31,7 +31,7 @@ test('public anon, publishable and Firebase config are not classified as secret 
 test('provider token and private key shapes stay redacted in scanner reports', async t => {
   const root = await mkdtemp(path.join(tmpdir(), 'guard-secret-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const samples = ['sk-proj-' + 'a'.repeat(32), 'ghp_' + 'b'.repeat(36), 'AKIA' + 'C'.repeat(16), 'AIza' + 'd'.repeat(35), 'sk_test_' + 'e'.repeat(24), 'xoxb-' + '1'.repeat(24), '-----BEGIN PRIVATE KEY-----'];
+  const samples = ['sk-proj-' + 'a'.repeat(32), 'ghp_' + 'b'.repeat(36), 'AKIA' + 'C'.repeat(16), 'AIza' + 'd'.repeat(35), 'sk_test_' + 'e'.repeat(24), 'xoxb-' + '1'.repeat(24), '-----BEGIN ' + 'PRIVATE KEY-----'];
   for (const sample of samples) assert.ok(ids(sample).includes('SECRET_LITERAL'));
   await writeFile(path.join(root, 'synthetic.env'), 'SUPABASE_SERVICE_ROLE_KEY=synthetic-value-only\n' + samples.join('\n'));
   const report = await scanDirectory(root);
