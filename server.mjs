@@ -33,7 +33,7 @@ export async function startReviewServer(scan, locations = new Map()) {
     }
     if (req.method === 'GET' && url.pathname === '/api/location') {
       const id = url.searchParams.get('id');
-      if (!/^F\d{5}$/.test(id || '') || !locations.has(id)) return end(404, '위치를 찾을 수 없음');
+      if (!/^F\d{5,}$/.test(id || '') || !locations.has(id)) return end(404, '위치를 찾을 수 없음');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       return res.end(JSON.stringify({ relativePath: locations.get(id) }));
     }

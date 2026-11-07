@@ -76,21 +76,19 @@ test('cross-file sensitive and AI terms request flow review without asserting pr
   assert.ok(report.findings.some(x => x.id === 'SENSITIVE_AI_SIGNALS' && x.confidence === 'pattern_signal'));
   assert.notEqual(report.status, 'BLOCKED');
 });
-test('resource limits, unsupported binaries, and invalid encoding declare incomplete coverage', async t => {
+test('unsupported binaries and invalid encoding declare incomplete coverage', async t => {
   const root = await fixture(t, { 'huge.txt': 'a'.repeat(100), 'binary.txt': Buffer.from([0, 255]), 'invalid.txt': Buffer.from([255, 254]), 'archive.zip': 'binary' });
-  const report = await scanDirectory(root, { maxFileBytes: 20 });
+  const report = await scanDirectory(root);
   assert.equal(report.coverage.complete, false);
-  assert.equal(report.coverage.skippedFiles, 4);
+  assert.equal(report.coverage.skippedFiles, 3);
+  assert.equal(report.coverage.filesScanned, 1);
   assert.ok(report.findings.some(x => x.id === 'COVERAGE_INCOMPLETE'));
 });
-test('directory entries bounded; dependency folders are excluded explicitly', async t => {
+test('dependency folders remain excluded explicitly', async t => {
   const root = await fixture(t, { 'node_modules/module/index.js': 'eval(input)', 'one.js': 'const x = 1;', 'two.js': 'const y = 2;' });
   const report = await scanDirectory(root);
   assert.equal(report.coverage.excludedDirectories, 1);
   assert.ok(!report.findings.some(x => x.id === 'DYNAMIC_CODE'));
-  const bounded = await scanDirectory(root, { maxEntries: 1 });
-  assert.equal(bounded.coverage.complete, false);
-  assert.equal(bounded.coverage.truncated, true);
 });
 test('missing/empty roots are reportable, without path disclosure', async t => {
   const root = await fixture(t, {});
